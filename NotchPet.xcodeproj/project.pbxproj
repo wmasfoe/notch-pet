@@ -1,0 +1,33 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A1000001000000000000001 /* NotchPetApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000001 /* NotchPetApp.swift */; };
+		A1000002000000000000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000002000000000000001 /* AppDelegate.swift */; };
+		A1000003000000000000001 /* WindowManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000003000000000000001 /* WindowManager.swift */; };
+		A1000004000000000000001 /* NotchWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000004000000000000001 /* NotchWindow.swift */; };
+		A1000005000000000000001 /* NotchWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000005000000000000001 /* NotchWindowController.swift */; };
+		A1000006000000000000001 /* NSScreen+Notch.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000006000000000000001 /* NSScreen+Notch.swift */; };
+		A1000007000000000000001 /* PetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000007000000000000001 /* PetView.swift */; };
+		A1000008000000000000001 /* PixelPets.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000008000000000000001 /* PixelPets.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A3000001000000000000001 /* NotchPet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NotchPet.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A2000001000000000000001 /* NotchPetApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchPetApp.swift; sourceTree = "<group>"; };
+		A2000002000000000000001 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A2000003000000000000001 /* WindowManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManager.swift; sourceTree = "<group>"; };
+		A2000004000000000000001 /* NotchWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchWindow.swift; sourceTree = "<group>"; };
+		A2000005000000000000001 /* NotchWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchWindowController.swift; sourceTree = "<group>"; };
+		A2000006000000000000001 /* NSScreen+Notch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSScreen+Notch.swift"; sourceTree = "<group>"; };
+		A2000007000000000000001 /* PetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetView.swift; sourceTree = "<group>"; };
+		A2000008000000000000001 /* PixelPets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelPets.swift; sourceTree = "<group>"; };
+		A2000009000000000000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
