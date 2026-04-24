@@ -16,6 +16,9 @@ swiftc -o build/NotchPet \
     NotchPet/WindowManager.swift \
     NotchPet/NotchWindow.swift \
     NotchPet/NotchWindowController.swift \
+    NotchPet/NotchViewController.swift \
+    NotchPet/NotchViewModel.swift \
+    NotchPet/NotchShape.swift \
     NotchPet/NSScreen+Notch.swift \
     NotchPet/PetView.swift \
     NotchPet/PixelPets.swift \

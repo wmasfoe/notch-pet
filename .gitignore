@@ -28,4 +28,4 @@ Package.resolved
 *.swp
 *.swo
 *~
-.omx/
+# .omx/

@@ -15,7 +15,13 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "NotchPet",
-            path: "NotchPet"
+            path: "NotchPet",
+            exclude: ["Info.plist"]
+        ),
+        .testTarget(
+            name: "NotchPetTests",
+            dependencies: ["NotchPet"],
+            path: "NotchPetTests"
         )
     ]
 )

@@ -1,0 +1,16 @@
+{
+  "score": 84,
+  "verdict": "revise",
+  "category_match": true,
+  "differences": [
+    "The refactor now implements the approved idle/active/expanded contract, but the exact top-edge blend against a physical notch still lacks a fresh display screenshot.",
+    "The pet sprites and motion are custom reconstructions, so cadence and silhouette may still differ from the Mac Pet references.",
+    "Package-level tests were added in-plan but could not run in this CLI environment because neither XCTest nor Testing modules are exposed by the installed command-line toolchain."
+  ],
+  "suggestions": [
+    "Run the app on a notched MacBook and capture a fresh screenshot of idle and active states to tune the notch-edge blend and width tolerances.",
+    "Compare a short screen recording against the Mac Pet walking and sleeping GIFs and adjust sprite scale, patrol range, and idle perch height as needed.",
+    "If package tests are required in this environment, install a full Xcode toolchain or an SDK/toolchain pair that exposes XCTest."
+  ],
+  "reasoning": "The implementation now matches the planned state model and passed `swift build`, `./build.sh`, and a short runtime launch. The remaining gaps are visual capture on real hardware and package-test support in the current CLI toolchain."
+}

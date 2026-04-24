@@ -7,22 +7,74 @@ import AppKit
 import Foundation
 import SwiftUI
 
-enum NotchStatus {
-    case closed
-    case hovered
+enum NotchStatus: Equatable {
+    case idle
+    case active
     case expanded
+}
+
+enum NotchBaseMode: String, CaseIterable, Equatable, Identifiable {
+    case idle
+    case active
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .idle:
+            return "Idle"
+        case .active:
+            return "Active"
+        }
+    }
+}
+
+struct NotchStateModel: Equatable {
+    var baseMode: NotchBaseMode = .idle
+    var isHoverPromoted = false
+    var isExpanded = false
+
+    var status: NotchStatus {
+        if isExpanded {
+            return .expanded
+        }
+        if baseMode == .active || isHoverPromoted {
+            return .active
+        }
+        return .idle
+    }
+
+    mutating func setBaseMode(_ mode: NotchBaseMode) {
+        baseMode = mode
+    }
+
+    mutating func setHovering(_ hovering: Bool) {
+        guard baseMode == .idle else {
+            isHoverPromoted = false
+            return
+        }
+        isHoverPromoted = hovering
+    }
+
+    mutating func toggleExpanded() {
+        isExpanded.toggle()
+    }
+
+    mutating func collapseExpanded() {
+        isExpanded = false
+    }
 }
 
 @MainActor
 final class NotchViewModel: ObservableObject {
-    @Published var status: NotchStatus = .closed
+    @Published private(set) var state = NotchStateModel()
 
     let deviceNotchRect: CGRect
     let screenRect: CGRect
     let windowHeight: CGFloat
     let hasPhysicalNotch: Bool
 
-    private var collapseTask: DispatchWorkItem?
+    private var bootPulseTask: DispatchWorkItem?
 
     init(
         deviceNotchRect: CGRect,
@@ -36,117 +88,97 @@ final class NotchViewModel: ObservableObject {
         self.hasPhysicalNotch = hasPhysicalNotch
     }
 
-    var closedSize: CGSize {
-        CGSize(
-            width: max(deviceNotchRect.width, hasPhysicalNotch ? 182 : 220),
-            height: max(deviceNotchRect.height + 16, 42)
-        )
-    }
+    var status: NotchStatus { state.status }
+    var baseMode: NotchBaseMode { state.baseMode }
+    var isExpanded: Bool { state.isExpanded }
+    var isHoverPromoted: Bool { state.isHoverPromoted }
 
-    var hoveredSize: CGSize {
-        CGSize(
-            width: closedSize.width + 34,
-            height: closedSize.height + 10
-        )
-    }
-
-    var expandedSize: CGSize {
-        CGSize(
-            width: min(max(closedSize.width + 132, 320), 420),
-            height: 178
-        )
-    }
-
-    var currentSize: CGSize {
+    var visibleChromeSize: CGSize {
+        let notchWidth = max(deviceNotchRect.width, hasPhysicalNotch ? deviceNotchRect.width : 212)
         switch status {
-        case .closed:
-            return closedSize
-        case .hovered:
-            return hoveredSize
+        case .idle:
+            return CGSize(
+                width: notchWidth + (hasPhysicalNotch ? 12 : 16),
+                height: max(deviceNotchRect.height + 6, 34)
+            )
+        case .active:
+            return CGSize(
+                width: notchWidth + (hasPhysicalNotch ? 36 : 40),
+                height: max(deviceNotchRect.height + 20, 48)
+            )
         case .expanded:
-            return expandedSize
+            return CGSize(
+                width: min(max(notchWidth + 176, 340), 440),
+                height: 186
+            )
         }
     }
 
-    var contentPadding: CGFloat {
+    var hitTargetInsets: NSEdgeInsets {
         switch status {
-        case .closed:
-            return 10
-        case .hovered:
-            return 12
+        case .idle:
+            return NSEdgeInsets(top: 10, left: 12, bottom: 12, right: 12)
+        case .active:
+            return NSEdgeInsets(top: 10, left: 8, bottom: 12, right: 8)
         case .expanded:
-            return 14
+            return NSEdgeInsets(top: 10, left: 16, bottom: 16, right: 16)
         }
     }
 
     var hitTestRect: CGRect {
-        let size = currentSize
+        let size = visibleChromeSize
+        let inset = hitTargetInsets
         return CGRect(
-            x: (screenRect.width - size.width) / 2 - 18,
-            y: windowHeight - size.height - 14,
-            width: size.width + 36,
-            height: size.height + 24
+            x: (screenRect.width - size.width) / 2 - inset.left,
+            y: windowHeight - size.height - inset.top,
+            width: size.width + inset.left + inset.right,
+            height: size.height + inset.top + inset.bottom
         )
     }
 
-    func handleHover(_ hovering: Bool) {
-        if hovering {
-            cancelPendingCollapse()
-            if status != .expanded {
-                withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
-                    status = .hovered
-                }
-            }
-            return
+    func setManualMode(_ mode: NotchBaseMode) {
+        updateState {
+            $0.setBaseMode(mode)
         }
+    }
 
-        let delay: TimeInterval = status == .expanded ? 0.8 : 0.18
-        scheduleCollapse(after: delay)
+    func handleHover(_ hovering: Bool) {
+        updateState {
+            $0.setHovering(hovering)
+        }
     }
 
     func toggleExpanded() {
-        cancelPendingCollapse()
-        withAnimation(.spring(response: 0.38, dampingFraction: 0.84)) {
-            status = status == .expanded ? .hovered : .expanded
+        updateState {
+            $0.toggleExpanded()
+        }
+    }
+
+    func closeExpanded() {
+        updateState {
+            $0.collapseExpanded()
         }
     }
 
     func performBootAnimation() {
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-            status = .hovered
+        bootPulseTask?.cancel()
+        updateState {
+            $0.setHovering(true)
         }
 
         let task = DispatchWorkItem { [weak self] in
             guard let self else { return }
-            withAnimation(.spring(response: 0.38, dampingFraction: 0.9)) {
-                self.status = .closed
+            self.updateState {
+                $0.setHovering(false)
             }
         }
-        collapseTask = task
+        bootPulseTask = task
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.55, execute: task)
     }
 
-    func closeImmediately() {
-        cancelPendingCollapse()
-        withAnimation(.spring(response: 0.32, dampingFraction: 0.9)) {
-            status = .closed
-        }
-    }
-
-    private func scheduleCollapse(after delay: TimeInterval) {
-        cancelPendingCollapse()
-        let task = DispatchWorkItem { [weak self] in
-            guard let self, self.status != .closed else { return }
-            withAnimation(.spring(response: 0.34, dampingFraction: 0.9)) {
-                self.status = .closed
-            }
-        }
-        collapseTask = task
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: task)
-    }
-
-    private func cancelPendingCollapse() {
-        collapseTask?.cancel()
-        collapseTask = nil
+    private func updateState(_ mutate: (inout NotchStateModel) -> Void) {
+        var next = state
+        mutate(&next)
+        state = next
     }
 }

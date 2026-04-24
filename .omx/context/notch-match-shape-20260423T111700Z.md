@@ -1,0 +1,27 @@
+# Deep Interview Context Snapshot
+
+- Task statement: The current notch pet still visually reads as two separate black blocks and does not match the MacBook notch area.
+- Desired outcome: Align the closed and animated notch presentation with the physical notch / vibe-notch-style silhouette instead of detached rounded blocks.
+- Stated solution: Rework the notch-region visuals and interaction so the pet feels anchored to the notch and not like left/right capsules.
+- Probable intent hypothesis: The user primarily cares about visual fidelity to the notch silhouette and reference products, more than the current placeholder animation implementation.
+- Known facts/evidence:
+  - The user supplied a screenshot showing two detached black rounded blocks at the top corners around the pet.
+  - In `NotchViewModel.closedSize`, width is forced to at least `182`, which can exceed the physical notch width.
+  - `PetView` paints one full black panel background and clips it with `NotchShape`, rather than composing tightly around the real notch footprint.
+  - The previous goal was to align with `vibe-notch` interaction and `mac-pet` animation references, while excluding Claude/CLI monitoring logic.
+- Constraints:
+  - No Claude Code listening logic.
+  - Preserve notch-area interaction goals and animation polish.
+  - This is a brownfield SwiftUI/AppKit overlay app.
+- Unknowns/open questions:
+  - Whether the closed state should match the physical notch width exactly, or intentionally be wider like a Dynamic Island.
+  - Whether any visible black area should exist to the left/right of the physical notch in the idle state.
+  - Whether the pet should sit inside the notch mask, below it, or partially overlap the notch edge.
+- Decision-boundary unknowns:
+  - How strictly to prioritize physical-notch fidelity versus stylized Dynamic Island expansion.
+  - What OMX may decide about idle/hover/expanded silhouettes without further confirmation.
+- Likely codebase touchpoints:
+  - `NotchPet/NotchViewModel.swift`
+  - `NotchPet/PetView.swift`
+  - `NotchPet/NotchShape.swift`
+  - `NotchPet/NotchWindowController.swift`

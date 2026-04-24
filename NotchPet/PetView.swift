@@ -11,56 +11,39 @@ struct PetView: View {
     @State private var appearedAt = Date()
     @State private var lastInteractionAt = Date()
     @State private var isPointerInside = false
-    @State private var wakePulse = false
 
-    private let closedAnimation = Animation.spring(response: 0.34, dampingFraction: 0.9)
-    private let openedAnimation = Animation.spring(response: 0.42, dampingFraction: 0.82)
+    private let transitionAnimation = Animation.spring(response: 0.36, dampingFraction: 0.84)
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 12.0)) { timeline in
-            let size = viewModel.currentSize
+            let chromeSize = viewModel.visibleChromeSize
             let sleeping = isSleeping(at: timeline.date)
 
             ZStack(alignment: .top) {
                 Color.clear
 
-                VStack(spacing: 0) {
-                    panelBody(date: timeline.date, sleeping: sleeping)
-                        .frame(width: size.width, height: size.height, alignment: .top)
-                        .background(panelBackground)
-                        .clipShape(
-                            NotchShape(
-                                topCornerRadius: topCornerRadius,
-                                bottomCornerRadius: bottomCornerRadius
-                            )
-                        )
-                        .overlay(alignment: .top) {
-                            Rectangle()
-                                .fill(Color.black)
-                                .frame(height: 1)
-                                .padding(.horizontal, topCornerRadius)
+                chromeBody(date: timeline.date, sleeping: sleeping)
+                    .frame(
+                        width: chromeSize.width,
+                        height: chromeSize.height,
+                        alignment: .top
+                    )
+                    .contentShape(Rectangle())
+                    .onHover { hovering in
+                        isPointerInside = hovering
+                        if hovering {
+                            lastInteractionAt = .now
                         }
-                        .shadow(
-                            color: .black.opacity(viewModel.status == .closed ? 0.28 : 0.52),
-                            radius: viewModel.status == .expanded ? 18 : 10,
-                            y: 6
-                        )
-                        .scaleEffect(wakePulse ? 1.018 : 1, anchor: .top)
-                        .contentShape(Rectangle())
-                        .onHover { hovering in
-                            isPointerInside = hovering
-                            if hovering {
-                                markInteraction()
-                            }
-                            viewModel.handleHover(hovering)
-                        }
-                        .onTapGesture {
-                            markInteraction()
+                        viewModel.handleHover(hovering)
+                    }
+                    .onTapGesture {
+                        lastInteractionAt = .now
+                        if !viewModel.isExpanded {
                             viewModel.toggleExpanded()
                         }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
         .onAppear {
             let now = Date()
@@ -68,96 +51,208 @@ struct PetView: View {
             lastInteractionAt = now
         }
         .preferredColorScheme(.dark)
-        .animation(viewModel.status == .expanded ? openedAnimation : closedAnimation, value: viewModel.status)
+        .animation(transitionAnimation, value: viewModel.status)
+        .animation(transitionAnimation, value: viewModel.baseMode)
+        .animation(.easeInOut(duration: 0.18), value: isPointerInside)
     }
 
     @ViewBuilder
-    private func panelBody(date: Date, sleeping: Bool) -> some View {
-        VStack(alignment: .leading, spacing: viewModel.status == .expanded ? 10 : 0) {
-            if viewModel.status == .expanded {
+    private func chromeBody(date: Date, sleeping: Bool) -> some View {
+        switch viewModel.status {
+        case .idle:
+            idleChrome(date: date, sleeping: sleeping)
+        case .active:
+            activeChrome(date: date, sleeping: false)
+        case .expanded:
+            expandedChrome(date: date, sleeping: false)
+        }
+    }
+
+    private func idleChrome(date: Date, sleeping: Bool) -> some View {
+        let chromeSize = viewModel.visibleChromeSize
+        let spriteScale = catScale
+        let spriteWidth = 16 * spriteScale
+        let centeredX = (chromeSize.width - spriteWidth) / 2
+
+        return ZStack(alignment: .topLeading) {
+            NotchShape(topCornerRadius: 6, bottomCornerRadius: 10)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.black.opacity(0.94),
+                            Color.black.opacity(0.82)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .frame(width: chromeSize.width, height: 12)
+
+            Capsule()
+                .fill(Color.white.opacity(0.08))
+                .frame(width: chromeSize.width - 22, height: 1)
+                .offset(x: 11, y: 10)
+
+            Ellipse()
+                .fill(Color.black.opacity(0.14))
+                .frame(width: spriteWidth * 0.8, height: 5)
+                .offset(x: centeredX + spriteWidth * 0.1, y: 27)
+
+            CatPixelArt(
+                isSleeping: sleeping,
+                frame: frameIndex(at: date, sleeping: sleeping),
+                scale: spriteScale,
+                mirrored: false
+            )
+            .offset(x: centeredX, y: 4)
+
+            if sleeping {
+                SleepBubbleStack(tick: date.timeIntervalSince(appearedAt))
+                    .offset(x: centeredX + spriteWidth * 0.7, y: -10)
+            }
+        }
+    }
+
+    private func activeChrome(date: Date, sleeping: Bool) -> some View {
+        let chromeSize = viewModel.visibleChromeSize
+
+        return islandChrome(
+            size: chromeSize,
+            topRadius: 10,
+            bottomRadius: 20
+        ) {
+            patrolStage(
+                date: date,
+                sleeping: sleeping,
+                stageHeight: chromeSize.height
+            )
+            .padding(.horizontal, 10)
+            .padding(.top, 4)
+        }
+    }
+
+    private func expandedChrome(date: Date, sleeping: Bool) -> some View {
+        let chromeSize = viewModel.visibleChromeSize
+
+        return islandChrome(
+            size: chromeSize,
+            topRadius: 18,
+            bottomRadius: 26
+        ) {
+            VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 8) {
-                    Capsule()
-                        .fill(sleeping ? Color(red: 0.44, green: 0.58, blue: 0.9) : Color(red: 0.97, green: 0.55, blue: 0.22))
+                    Circle()
+                        .fill(viewModel.baseMode == .active ? Color.orange : Color.blue)
                         .frame(width: 8, height: 8)
 
-                    Text(sleeping ? "Nap Mode" : "Patrol Mode")
+                    Text("Notch Pet")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.92))
 
                     Spacer()
 
-                    Text("Click to fold")
-                        .font(.system(size: 11, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.35))
+                    Button {
+                        viewModel.closeExpanded()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.white.opacity(0.55))
+                            .frame(width: 20, height: 20)
+                            .background(Color.white.opacity(0.08), in: Circle())
+                    }
+                    .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-            }
 
-            petStage(date: date, sleeping: sleeping)
-                .frame(
-                    height: viewModel.status == .expanded ? 88 : (viewModel.status == .hovered ? 48 : 40)
+                patrolStage(
+                    date: date,
+                    sleeping: sleeping,
+                    stageHeight: 82
                 )
-                .padding(.horizontal, viewModel.status == .expanded ? 14 : 10)
-                .padding(.top, viewModel.status == .expanded ? 0 : 4)
+                .frame(height: 82)
 
-            if viewModel.status == .expanded {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(sleeping ? "休息时会蜷在刘海下方，悬停后会立刻醒来。" : "沿着刘海底边巡逻，进入悬停态后会弹性展开。")
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Mode")
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.7))
+
+                    Picker("Mode", selection: baseModeBinding) {
+                        ForEach(NotchBaseMode.allCases) { mode in
+                            Text(mode.title).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    Text("Hover can wake the pet into active mode, but only a click opens this panel.")
                         .font(.system(size: 12, weight: .medium, design: .rounded))
                         .foregroundStyle(.white.opacity(0.72))
-                        .lineLimit(2)
-
-                    HStack(spacing: 6) {
-                        statChip(title: "Blend", value: "Notch")
-                        statChip(title: "State", value: sleeping ? "Sleep" : "Walk")
-                        statChip(title: "Feel", value: "Spring")
-                    }
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 14)
+
+                HStack(spacing: 6) {
+                    statChip(title: "Hover", value: "Active")
+                    statChip(title: "Expand", value: "Click")
+                    statChip(title: "Info", value: "Manual")
+                }
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+            .padding(.bottom, 14)
         }
     }
 
-    private func petStage(date: Date, sleeping: Bool) -> some View {
+    private func islandChrome<Content: View>(
+        size: CGSize,
+        topRadius: CGFloat,
+        bottomRadius: CGFloat,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        ZStack(alignment: .top) {
+            NotchShape(topCornerRadius: topRadius, bottomCornerRadius: bottomRadius)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.black,
+                            Color.black.opacity(0.96),
+                            Color.black.opacity(0.88)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+
+            Rectangle()
+                .fill(Color.white.opacity(0.06))
+                .frame(height: 1)
+                .padding(.horizontal, topRadius + 2)
+
+            content()
+        }
+        .frame(width: size.width, height: size.height, alignment: .top)
+        .shadow(color: .black.opacity(0.42), radius: 14, y: 6)
+    }
+
+    private func patrolStage(date: Date, sleeping: Bool, stageHeight: CGFloat) -> some View {
         GeometryReader { proxy in
             let spriteScale = catScale
             let spriteWidth = 16 * spriteScale
             let progress = movementProgress(at: date, sleeping: sleeping)
-            let availableWidth = max(proxy.size.width - spriteWidth - 10, 0)
-            let x = sleeping ? proxy.size.width * 0.54 : 5 + availableWidth * progress
+            let availableWidth = max(proxy.size.width - spriteWidth - 12, 0)
+            let x = sleeping ? proxy.size.width * 0.55 : 6 + availableWidth * progress
             let directionRight = walkingDirection(at: date)
             let bodyLift = sleeping ? 0 : walkingBounce(at: date)
 
             ZStack(alignment: .bottomLeading) {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(viewModel.status == .expanded ? 0.08 : 0.04),
-                                Color.white.opacity(0.01)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .overlay(alignment: .bottom) {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(Color.white.opacity(0.05))
-                            .frame(height: 1)
-                    }
-                    .padding(.bottom, viewModel.status == .expanded ? 14 : 8)
+                Capsule(style: .continuous)
+                    .fill(Color.white.opacity(0.06))
+                    .frame(width: max(proxy.size.width - 8, 40), height: 1)
+                    .offset(x: 4, y: stageHeight - 18)
 
                 Ellipse()
-                    .fill(Color.black.opacity(0.28))
-                    .frame(
-                        width: sleeping ? spriteWidth * 0.9 : spriteWidth * 0.72,
-                        height: sleeping ? 8 : 6
-                    )
+                    .fill(Color.black.opacity(0.26))
+                    .frame(width: sleeping ? spriteWidth * 0.9 : spriteWidth * 0.72, height: 6)
                     .offset(
-                        x: sleeping ? x - spriteWidth * 0.2 : x + spriteWidth * 0.12,
-                        y: viewModel.status == .expanded ? -10 : -5
+                        x: sleeping ? x - spriteWidth * 0.2 : x + spriteWidth * 0.14,
+                        y: stageHeight - 19
                     )
 
                 CatPixelArt(
@@ -166,15 +261,7 @@ struct PetView: View {
                     scale: spriteScale,
                     mirrored: sleeping ? false : directionRight
                 )
-                .offset(
-                    x: sleeping ? x - spriteWidth * 0.18 : x,
-                    y: sleeping ? 0 : -bodyLift
-                )
-
-                if sleeping {
-                    SleepBubbleStack(tick: date.timeIntervalSince(appearedAt))
-                        .offset(x: x + spriteWidth * 0.6, y: -32)
-                }
+                .offset(x: sleeping ? x - spriteWidth * 0.18 : x, y: stageHeight - (sleeping ? 29 : 34 + bodyLift))
             }
         }
     }
@@ -192,56 +279,26 @@ struct PetView: View {
         .background(Color.white.opacity(0.06), in: Capsule())
     }
 
-    private var panelBackground: some View {
-        ZStack {
-            Color.black
-            LinearGradient(
-                colors: [
-                    Color.white.opacity(viewModel.status == .expanded ? 0.09 : 0.05),
-                    Color.clear,
-                    Color.black.opacity(0.18)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        }
-    }
-
-    private var topCornerRadius: CGFloat {
-        switch viewModel.status {
-        case .closed:
-            return 6
-        case .hovered:
-            return 10
-        case .expanded:
-            return 18
-        }
-    }
-
-    private var bottomCornerRadius: CGFloat {
-        switch viewModel.status {
-        case .closed:
-            return 14
-        case .hovered:
-            return 18
-        case .expanded:
-            return 26
-        }
+    private var baseModeBinding: Binding<NotchBaseMode> {
+        Binding(
+            get: { viewModel.baseMode },
+            set: { viewModel.setManualMode($0) }
+        )
     }
 
     private var catScale: CGFloat {
         switch viewModel.status {
-        case .closed:
+        case .idle:
             return 2.0
-        case .hovered:
-            return 2.3
+        case .active:
+            return 2.4
         case .expanded:
-            return 3.1
+            return 2.9
         }
     }
 
     private func isSleeping(at date: Date) -> Bool {
-        guard viewModel.status == .closed else { return false }
+        guard viewModel.status == .idle else { return false }
         guard !isPointerInside else { return false }
         return date.timeIntervalSince(lastInteractionAt) > 4.2
     }
@@ -259,10 +316,10 @@ struct PetView: View {
 
         let duration: TimeInterval
         switch viewModel.status {
-        case .closed:
-            duration = 2.9
-        case .hovered:
-            duration = 3.6
+        case .idle:
+            duration = 3.2
+        case .active:
+            duration = 3.8
         case .expanded:
             duration = 4.8
         }
@@ -277,10 +334,10 @@ struct PetView: View {
     private func walkingDirection(at date: Date) -> Bool {
         let duration: TimeInterval
         switch viewModel.status {
-        case .closed:
-            duration = 2.9
-        case .hovered:
-            duration = 3.6
+        case .idle:
+            duration = 3.2
+        case .active:
+            duration = 3.8
         case .expanded:
             duration = 4.8
         }
@@ -290,17 +347,7 @@ struct PetView: View {
 
     private func walkingBounce(at date: Date) -> CGFloat {
         let elapsed = date.timeIntervalSince(appearedAt)
-        return abs(sin(elapsed * 10)) * (viewModel.status == .expanded ? 4 : 2.4)
-    }
-
-    private func markInteraction() {
-        let now = Date()
-        lastInteractionAt = now
-        wakePulse = true
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-            wakePulse = false
-        }
+        return abs(sin(elapsed * 10)) * (viewModel.status == .expanded ? 4.2 : 2.8)
     }
 }
 
