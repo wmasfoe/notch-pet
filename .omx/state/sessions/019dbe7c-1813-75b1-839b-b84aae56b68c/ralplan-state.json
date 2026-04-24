@@ -1,0 +1,17 @@
+{
+  "active": false,
+  "mode": "ralplan",
+  "current_phase": "completed",
+  "started_at": "2026-04-24T08:55:50.996Z",
+  "updated_at": "2026-04-24T08:55:50.996Z",
+  "session_id": "019dbe7c-1813-75b1-839b-b84aae56b68c",
+  "thread_id": "019dbe7c-1813-75b1-839b-b84aae56b68c",
+  "turn_id": "019dbe93-afb0-7ab2-a40e-127e5e0d362e",
+  "iteration": 1,
+  "last_turn_at": "2026-04-24T09:08:10.518Z",
+  "completed_at": "2026-04-24T09:11:18.852Z",
+  "auto_completed_reason": "mode transiting: ralplan -> ralph",
+  "completion_note": "Auto-completed ralplan during allowlisted transition to ralph.",
+  "transition_source": "keyword-detector",
+  "transition_target_mode": "ralph"
+}

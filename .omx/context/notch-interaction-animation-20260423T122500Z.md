@@ -1,0 +1,31 @@
+# Deep Interview Context Snapshot
+
+- Task statement: Refine the current notch-pet interaction and animation after the first visual pass now looks directionally correct.
+- Desired outcome:
+  - `idle`: keep a small black island area visible, extending slightly to both sides, with the pet shown resting
+  - `active`: keep the current general look after hover
+  - `expanded`: keep the general shell but improve layout/spacing and default to Chinese
+  - state transitions should feel like Dynamic Island geometry morphs rather than simple fade/spring swaps
+- Stated solution: Improve the three state presentations and make the cross-state animation resemble vibe-notch / iOS Dynamic Island behavior.
+- Probable intent hypothesis: The user is now satisfied with the baseline silhouette and wants the interaction quality and animation language to feel premium rather than placeholder.
+- Known facts/evidence:
+  - Screenshot shows the current active state reads much better visually than before.
+  - `PetView` still swaps among separate `idleChrome`, `activeChrome`, and `expandedChrome` branches rather than animating one shared geometry surface.
+  - The current view only applies a generic spring animation to `viewModel.status` and `viewModel.baseMode`.
+  - Expanded content still uses English labels like `Notch Pet`, `Mode`, `Hover`, `Expand`, and `Info`.
+- Constraints:
+  - Keep current active-state direction unless adjustment is required by the final animation system.
+  - Preserve click-only entry for expanded.
+  - Keep interaction in this brownfield SwiftUI/AppKit overlay app.
+- Unknowns/open questions:
+  - Whether transitions must be a single shared-geometry morph, or whether a staged spring animation is acceptable if it reads like Dynamic Island.
+  - How much of the expanded layout/content should change beyond spacing and Chinese copy.
+  - Whether idle should always show the small black island or only during rest.
+- Decision-boundary unknowns:
+  - What OMX may decide about exact animation choreography without further confirmation.
+  - Whether animation fidelity or layout refinement takes priority if both cannot be done equally well in one pass.
+- Likely codebase touchpoints:
+  - `NotchPet/PetView.swift`
+  - `NotchPet/NotchViewModel.swift`
+  - `NotchPet/NotchShape.swift`
+  - `NotchPet/PixelPets.swift`

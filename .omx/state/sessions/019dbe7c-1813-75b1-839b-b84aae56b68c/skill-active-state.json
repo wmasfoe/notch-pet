@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "active": true,
+  "skill": "ralph",
+  "keyword": "$ralph",
+  "phase": "planning",
+  "activated_at": "2026-04-24T11:15:15.353Z",
+  "updated_at": "2026-04-24T11:15:15.353Z",
+  "source": "keyword-detector",
+  "session_id": "019dbe7c-1813-75b1-839b-b84aae56b68c",
+  "thread_id": "019dbe7c-1813-75b1-839b-b84aae56b68c",
+  "turn_id": "019dbf12-514c-7b33-b401-4353516c6886",
+  "active_skills": [
+    {
+      "skill": "ralph",
+      "phase": "planning",
+      "active": true,
+      "activated_at": "2026-04-24T11:15:15.353Z",
+      "updated_at": "2026-04-24T11:15:15.353Z",
+      "session_id": "019dbe7c-1813-75b1-839b-b84aae56b68c",
+      "thread_id": "019dbe7c-1813-75b1-839b-b84aae56b68c",
+      "turn_id": "019dbf12-514c-7b33-b401-4353516c6886"
+    }
+  ],
+  "input_lock": {
+    "active": false,
+    "scope": "deep-interview-auto-approval",
+    "acquired_at": "2026-04-24T10:01:50.206Z",
+    "blocked_inputs": [
+      "yes",
+      "y",
+      "proceed",
+      "continue",
+      "ok",
+      "sure",
+      "go ahead",
+      "next i should"
+    ],
+    "message": "Deep interview completed.",
+    "released_at": "2026-04-24T11:15:15.353Z",
+    "exit_reason": "handoff"
+  },
+  "initialized_mode": "ralph",
+  "initialized_state_path": ".omx/state/sessions/019dbe7c-1813-75b1-839b-b84aae56b68c/ralph-state.json"
+}

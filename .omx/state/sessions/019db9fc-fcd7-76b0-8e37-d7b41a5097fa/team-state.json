@@ -1,0 +1,15 @@
+{
+  "active": false,
+  "current_phase": "completed_without_team_runtime",
+  "error": "Cannot launch durable OMX team runtime from this shell: omx and tmux are not available on PATH, and TMUX is unset.",
+  "completed_at": "2026-04-24T06:23:30.000Z",
+  "context_snapshot": ".omx/context/notch-click-through-bug-20260424T061700Z.md",
+  "fallback": "solo minimal fix due clear root cause",
+  "team_runtime": "blocked: omx/tmux unavailable in shell",
+  "fix_summary": "Shrink NSPanel to current notch interaction frame and remove CGEvent repost pass-through workaround.",
+  "verification": [
+    "swift build passed",
+    "./build.sh passed",
+    "did not launch ./build/NotchPet per user preference"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "directives": [
+    {
+      "directive": "For NotchPet visual verification, prefer letting the user manually launch built artifacts. If the agent must launch ./build/NotchPet to inspect effects, it must close the app before finishing.",
+      "priority": "normal",
+      "timestamp": "2026-04-24T06:14:30.250Z"
+    },
+    {
+      "directive": "When shell commands involving omx/Node tooling are unavailable or fail due to Node version/PATH, try `fnm use 22.21` first, then retry the command in the same shell context.",
+      "priority": "normal",
+      "timestamp": "2026-04-24T06:42:59.202Z"
+    }
+  ],
+  "notes": [
+    {
+      "category": "env",
+      "content": "2026-04-24: `eval \"$(fnm env)\" && fnm use 22.21` makes `omx` available at `/Users/gztd-03-01473/.local/state/fnm_multishells/.../bin/omx`. Retried `omx team 1:executor ...`; runtime failed with `Error: Team mode requires tmux. Install with: apt install tmux / brew install tmux`. So fnm fixes omx/Node PATH, but durable team still requires tmux installed and ideally a TMUX leader session.",
+      "timestamp": "2026-04-24T06:45:51.655Z"
+    }
+  ]
+}
