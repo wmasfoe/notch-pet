@@ -103,8 +103,8 @@ final class NotchViewModel: ObservableObject {
             )
         case .active:
             return CGSize(
-                width: notchWidth + (hasPhysicalNotch ? 36 : 40),
-                height: max(deviceNotchRect.height + 20, 48)
+                width: notchWidth + (hasPhysicalNotch ? 124 : 132),
+                height: max(deviceNotchRect.height + 18, 46)
             )
         case .expanded:
             return CGSize(

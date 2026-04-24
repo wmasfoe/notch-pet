@@ -1,13 +1,13 @@
 {
-  "active": true,
+  "active": false,
   "mode": "deep-interview",
-  "current_phase": "completed_with_assumptions",
-  "task_description": "Refine idle/active/expanded interaction, Chinese copy, and Dynamic-Island-style transition animation after the first visual pass.",
+  "current_phase": "completed",
+  "task_description": "Clarify active-state display and motion for NotchPet after idle side-rest behavior is accepted.",
   "started_at": "2026-04-23T11:15:45.023Z",
-  "updated_at": "2026-04-24T06:52:57.237Z",
-  "completed_at": "2026-04-24T03:55:00.000Z",
+  "updated_at": "2026-04-24T08:10:15.000Z",
+  "completed_at": "2026-04-24T08:10:15.000Z",
   "session_id": "019db9fc-fcd7-76b0-8e37-d7b41a5097fa",
-  "turn_id": "019dbe43-53c3-7dd3-bdd5-04ff14129aad",
+  "turn_id": "019dbe53-4305-7e52-8eef-7108e35dde53",
   "state": {
     "interview_id": "notch-interaction-animation-20260423T122500Z",
     "profile": "standard",
@@ -59,7 +59,85 @@
       "context": 0.88
     }
   },
-  "iteration": 6,
-  "last_turn_at": "2026-04-24T06:46:02.345Z",
-  "thread_id": "019db9fc-fcd7-76b0-8e37-d7b41a5097fa"
+  "iteration": 12,
+  "last_turn_at": "2026-04-24T07:45:12.953Z",
+  "thread_id": "019db9fc-fcd7-76b0-8e37-d7b41a5097fa",
+  "interview_id": "active-state-motion-20260424T070505Z",
+  "profile": "standard",
+  "type": "brownfield",
+  "initial_idea": "Active state should stop looking like the side blocks retract and the notch expands downward; pet should become active rather than resting.",
+  "rounds": [
+    {
+      "round": 1,
+      "target": "outcome",
+      "question": "active 状态的黑色区域和宠物活动方式更接近哪一种？A 左右侧翼活动；B 完整宽岛巡逻；C 左右两侧都有活动空间，中间刘海区域尽量不画内容，宠物在左右两侧切换或探头。",
+      "answer": "C",
+      "effect": "active 目标明确为左右两侧活动空间，中间刘海区域尽量不承载内容；宠物应在两侧切换或探头，而不是形成明显向下展开的大胶囊。",
+      "ambiguity_after": 0.34
+    },
+    {
+      "round": 2,
+      "target": "scope",
+      "question": "在 C 这个方向下，宠物活动时是否允许经过刘海中间？A 不允许；B 可以短暂经过；C 可以连续跑动。",
+      "answer": "宠物不允许在刘海中间展示，否则会发生遮挡，但是可以在刘海的左右两边穿梭。",
+      "effect": "active 明确禁止宠物在刘海中间可见；左右穿梭可以存在，但中间经过必须被刘海遮挡、隐藏或用离场/入场动画表达。",
+      "ambiguity_after": 0.25
+    },
+    {
+      "round": 3,
+      "target": "success",
+      "question": "active 的“有所活动”你希望主要是哪种动作？A 左右探头/换边；B 单侧小范围走动；C 探头、跳、短跑、换边都有，但仍保持轻量。",
+      "answer": "先试试C",
+      "effect": "active 动作方向明确为轻量活泼组合：可以包含探头、跳、短跑和换边，但仍不能进入 expanded 信息态，也不能让宠物在刘海中间可见。",
+      "ambiguity_after": 0.19
+    },
+    {
+      "round": 4,
+      "target": "non-goals",
+      "question": "active 状态最不需要的是什么，以避免它做重或做偏？",
+      "answer": "active 状态最不需要的就是信息面板化，压根不需要展示信息；将来最多可能展示某一个图标，不会展示过多信息。过于复杂的动画现阶段也不需要，一步一步来。",
+      "effect": "non-goals 被明确钉死：active 不是信息态，不承载信息面板；最多预留单图标可能性；当前不做复杂多段编排动画。",
+      "ambiguity_after": 0.15
+    },
+    {
+      "round": 5,
+      "target": "decision-boundary",
+      "question": "进入实现后，哪些细节允许 OMX 直接自己定，不用再回头确认？",
+      "answer": "omx 可以自己觉得，有一些网站我觉得很好，可以供你参考：https://github.com/farouqaldori/vibe-notch。动画一定要优雅，类似 iOS 的灵动岛。",
+      "effect": "decision boundaries 已明确：OMX 可自行决定 active 两侧舞台的具体尺寸、隐藏穿越或离场入场的实现方式，以及轻量动画的节奏与先后顺序；但结果必须优雅、偏 iOS Dynamic Island 气质，并以 vibe-notch 作为方向性参考。",
+      "ambiguity_after": 0.15
+    }
+  ],
+  "current_ambiguity": 0.15,
+  "threshold": 0.2,
+  "max_rounds": 12,
+  "challenge_modes_used": [],
+  "codebase_context": {
+    "evidence": [
+      "idle width is notchWidth + 132 while active width is notchWidth + 36",
+      "active height is deviceNotchRect.height + 20",
+      "idle uses side-wing renderer; active uses full islandChrome renderer",
+      "activeContent already uses patrolStage but inside a narrower downward island"
+    ]
+  },
+  "current_stage": "intent-first",
+  "current_focus": "completed",
+  "context_snapshot_path": ".omx/context/active-state-motion-20260424T070505Z.md",
+  "readiness_gates": {
+    "non_goals_explicit": true,
+    "decision_boundaries_explicit": true,
+    "pressure_pass_complete": true
+  },
+  "scores": {
+    "intent": 0.84,
+    "outcome": 0.88,
+    "scope": 0.86,
+    "constraints": 0.92,
+    "success": 0.86,
+    "context": 0.96
+  },
+  "artifacts": {
+    "transcript_path": ".omx/interviews/active-state-motion-20260424T081015Z.md",
+    "spec_path": ".omx/specs/deep-interview-active-state-motion.md"
+  }
 }

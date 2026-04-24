@@ -25,12 +25,11 @@ struct PetView: View {
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 12.0)) { timeline in
             let chromeSize = viewModel.visibleChromeSize
-            let sleeping = isSleeping(at: timeline.date)
 
             ZStack(alignment: .top) {
                 Color.clear
 
-                chromeBody(date: timeline.date, sleeping: sleeping)
+                chromeBody(date: timeline.date)
                     .frame(
                         width: chromeSize.width,
                         height: chromeSize.height,
@@ -76,20 +75,22 @@ struct PetView: View {
     }
 
     @ViewBuilder
-    private func chromeBody(date: Date, sleeping: Bool) -> some View {
+    private func chromeBody(date: Date) -> some View {
         let metrics = chromeMetrics
 
         switch viewModel.status {
         case .idle:
             idleChrome(date: date)
-        case .active, .expanded:
+        case .active:
+            activeChrome()
+        case .expanded:
             islandChrome(
                 size: viewModel.visibleChromeSize,
                 topRadius: metrics.topRadius,
                 bottomRadius: metrics.bottomRadius,
                 shadowOpacity: metrics.shadowOpacity
             ) {
-                statusContent(date: date, sleeping: sleeping)
+                statusContent(date: date)
                     .opacity(contentIsRevealed ? 1 : 0)
                     .offset(y: contentIsRevealed ? 0 : -8)
                     .animation(contentAnimation, value: contentIsRevealed)
@@ -97,15 +98,66 @@ struct PetView: View {
         }
     }
 
+    private func activeChrome() -> some View {
+        let chromeSize = viewModel.visibleChromeSize
+        let layout = activeLayout(for: chromeSize)
+
+        return ZStack(alignment: .top) {
+            ActiveChromeShape(
+                quietZoneWidth: layout.quietZoneWidth,
+                bridgeHeight: layout.bridgeHeight,
+                topCornerRadius: chromeMetrics.topRadius,
+                bottomCornerRadius: chromeMetrics.bottomRadius
+            )
+            .fill(
+                LinearGradient(
+                    colors: [
+                        Color.black.opacity(0.98),
+                        Color.black.opacity(0.95),
+                        Color.black.opacity(0.9)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+
+            Capsule(style: .continuous)
+                .fill(Color.white.opacity(0.06))
+                .frame(width: max(chromeSize.width - 48, 36), height: 1)
+                .offset(y: 2)
+
+            Capsule(style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.025),
+                            Color.white.opacity(0.0)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .frame(width: max(chromeSize.width - 30, 40), height: max(layout.bridgeHeight + 6, 16))
+                .offset(y: 2)
+
+            activeContent(date: appearedAt)
+                .opacity(contentIsRevealed ? 1 : 0)
+                .offset(y: contentIsRevealed ? 0 : -8)
+                .animation(contentAnimation, value: contentIsRevealed)
+        }
+        .frame(width: chromeSize.width, height: chromeSize.height, alignment: .top)
+        .shadow(color: .black.opacity(chromeMetrics.shadowOpacity), radius: 14, y: 5)
+    }
+
     @ViewBuilder
-    private func statusContent(date: Date, sleeping: Bool) -> some View {
+    private func statusContent(date: Date) -> some View {
         switch viewModel.status {
         case .idle:
             idleContent(date: date)
         case .active:
-            activeContent(date: date, sleeping: false)
+            activeContent(date: date)
         case .expanded:
-            expandedContent(date: date, sleeping: false)
+            expandedContent(date: date)
         }
     }
 
@@ -161,7 +213,7 @@ struct PetView: View {
     private func idleContent(date: Date) -> some View {
         let chromeSize = viewModel.visibleChromeSize
         let spriteScale = catScale
-        let spriteWidth = 16 * spriteScale
+        let spriteWidth = CGFloat(CatPixelArtMetrics.sleepingFrameWidth) * spriteScale
         let notchWidth = min(viewModel.deviceNotchRect.width, chromeSize.width)
         let wingWidth = max((chromeSize.width - notchWidth) / 2, spriteWidth + 12)
         let sideInset = max((wingWidth - spriteWidth) / 2, 8)
@@ -191,21 +243,21 @@ struct PetView: View {
         .frame(width: chromeSize.width, height: chromeSize.height, alignment: .topLeading)
     }
 
-    private func activeContent(date: Date, sleeping: Bool) -> some View {
+    private func activeContent(date: Date) -> some View {
         let chromeSize = viewModel.visibleChromeSize
+        let layout = activeLayout(for: chromeSize)
 
         return ZStack(alignment: .top) {
-            patrolStage(
+            activePatrolStage(
                 date: date,
-                sleeping: sleeping,
+                layout: layout,
                 stageHeight: chromeSize.height
             )
-            .padding(.horizontal, 10)
-            .padding(.top, 4)
+            .padding(.top, 3)
         }
     }
 
-    private func expandedContent(date: Date, sleeping: Bool) -> some View {
+    private func expandedContent(date: Date) -> some View {
         let chromeSize = viewModel.visibleChromeSize
 
         return VStack(alignment: .leading, spacing: 8) {
@@ -241,7 +293,7 @@ struct PetView: View {
 
             patrolStage(
                 date: date,
-                sleeping: sleeping,
+                sleeping: false,
                 stageHeight: 74
             )
             .frame(height: 74)
@@ -316,7 +368,9 @@ struct PetView: View {
     private func patrolStage(date: Date, sleeping: Bool, stageHeight: CGFloat) -> some View {
         GeometryReader { proxy in
             let spriteScale = catScale
-            let spriteWidth = 16 * spriteScale
+            let spriteWidth = CGFloat(
+                sleeping ? CatPixelArtMetrics.sleepingFrameWidth : CatPixelArtMetrics.walkingFrameWidth
+            ) * spriteScale
             let progress = movementProgress(at: date, sleeping: sleeping)
             let availableWidth = max(proxy.size.width - spriteWidth - 12, 0)
             let x = sleeping ? proxy.size.width * 0.55 : 6 + availableWidth * progress
@@ -346,6 +400,60 @@ struct PetView: View {
                 .offset(x: sleeping ? x - spriteWidth * 0.18 : x, y: stageHeight - (sleeping ? 29 : 34 + bodyLift))
             }
         }
+    }
+
+    private func activePatrolStage(date: Date, layout: ActiveStageLayout, stageHeight: CGFloat) -> some View {
+        GeometryReader { proxy in
+            let spriteScale = catScale
+            let spriteWidth = CGFloat(CatPixelArtMetrics.walkingFrameWidth) * spriteScale
+            let elapsed = date.timeIntervalSince(appearedAt)
+            let sample = layout.sample(elapsed: elapsed, spriteWidth: spriteWidth)
+            let bodyLift = sample.visible ? sample.bodyLift + walkingBounce(at: date) * 0.45 : 0
+            let shadowWidth = spriteWidth * sample.shadowScale
+
+            ZStack(alignment: .bottomLeading) {
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .fill(Color.white.opacity(0.065))
+                    .frame(width: max(layout.leftBayRect.width - 10, 16), height: 1)
+                    .offset(x: layout.leftBayRect.minX + 5, y: stageHeight - 14)
+
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .fill(Color.white.opacity(0.065))
+                    .frame(width: max(layout.rightBayRect.width - 10, 16), height: 1)
+                    .offset(x: layout.rightBayRect.minX + 5, y: stageHeight - 14)
+
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .fill(Color.black.opacity(0.28))
+                    .frame(width: layout.quietZoneWidth, height: max(stageHeight - layout.bridgeHeight - 8, 8))
+                    .offset(x: layout.quietZoneMinX, y: layout.bridgeHeight + 2)
+
+                if sample.visible {
+                    Ellipse()
+                        .fill(Color.black.opacity(0.24))
+                        .frame(width: shadowWidth, height: 6)
+                        .offset(
+                            x: sample.spriteX + spriteWidth * 0.12,
+                            y: stageHeight - 16
+                        )
+
+                    CatPixelArt(
+                        isSleeping: false,
+                        frame: frameIndex(at: date, sleeping: false),
+                        scale: spriteScale,
+                        mirrored: sample.mirrored
+                    )
+                    .offset(x: sample.spriteX, y: stageHeight - (35 + bodyLift))
+                }
+            }
+            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .bottomLeading)
+        }
+    }
+
+    private func activeLayout(for chromeSize: CGSize) -> ActiveStageLayout {
+        ActiveStageLayout(
+            containerSize: chromeSize,
+            notchWidth: min(viewModel.deviceNotchRect.width, chromeSize.width - 24)
+        )
     }
 
     private func statChip(title: String, value: String) -> some View {
@@ -399,9 +507,9 @@ struct PetView: View {
     private func frameIndex(at date: Date, sleeping: Bool) -> Int {
         let elapsed = date.timeIntervalSince(appearedAt)
         if sleeping {
-            return Int(elapsed * 1.6) % 2
+            return Int(elapsed * 1.6) % CatPixelArtMetrics.sleepingFrameCount
         }
-        return Int(elapsed * 10) % 4
+        return Int(elapsed * 10) % CatPixelArtMetrics.walkingFrameCount
     }
 
     private func movementProgress(at date: Date, sleeping: Bool) -> CGFloat {

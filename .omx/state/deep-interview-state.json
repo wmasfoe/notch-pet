@@ -1,16 +1,17 @@
 {
-  "active": true,
+  "active": false,
   "mode": "deep-interview",
-  "current_phase": "intent-first",
-  "started_at": "2026-04-24T06:42:08.015Z",
-  "updated_at": "2026-04-24T06:52:57.237Z",
-  "session_id": "019db9fc-fcd7-76b0-8e37-d7b41a5097fa",
-  "thread_id": "",
-  "turn_id": "019dbe43-53c3-7dd3-bdd5-04ff14129aad",
+  "current_phase": "completed",
+  "started_at": "2026-04-24T10:01:50.206Z",
+  "updated_at": "2026-04-24T10:26:51.000Z",
+  "completed_at": "2026-04-24T10:26:51.000Z",
+  "session_id": "019dbe7c-1813-75b1-839b-b84aae56b68c",
+  "thread_id": "019dbe7c-1813-75b1-839b-b84aae56b68c",
+  "turn_id": "019dbeec-7cbb-7673-91a7-026def094c4e",
   "input_lock": {
-    "active": true,
+    "active": false,
     "scope": "deep-interview-auto-approval",
-    "acquired_at": "2026-04-24T06:42:08.015Z",
+    "acquired_at": "2026-04-24T10:01:50.206Z",
     "blocked_inputs": [
       "yes",
       "y",
@@ -21,6 +22,22 @@
       "go ahead",
       "next i should"
     ],
-    "message": "Deep interview is active; auto-approval shortcuts are blocked until the interview finishes."
+    "message": "Deep interview completed."
+  },
+  "task_description": "Clarify local GIF-based cat motion fidelity and active-shell unification requirements for the next NotchPet visual pass.",
+  "state": {
+    "interview_id": "cat-motion-reference-20260424T095945Z",
+    "profile": "standard",
+    "type": "brownfield",
+    "current_ambiguity": 0.08,
+    "threshold": 0.2,
+    "readiness_gates": {
+      "non_goals_explicit": true,
+      "decision_boundaries_explicit": true,
+      "pressure_pass_complete": true
+    },
+    "context_snapshot_path": ".omx/context/cat-motion-reference-20260424T095945Z.md",
+    "transcript_path": ".omx/interviews/cat-motion-reference-20260424T102651Z.md",
+    "spec_path": ".omx/specs/deep-interview-cat-motion-reference.md"
   }
 }
