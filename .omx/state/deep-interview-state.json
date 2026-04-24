@@ -1,17 +1,16 @@
 {
-  "active": false,
+  "active": true,
   "mode": "deep-interview",
-  "current_phase": "completing",
-  "started_at": "2026-04-23T11:15:45.023Z",
-  "updated_at": "2026-04-23T11:37:45.307Z",
-  "completed_at": "2026-04-23T11:37:45.307Z",
+  "current_phase": "intent-first",
+  "started_at": "2026-04-24T06:42:08.015Z",
+  "updated_at": "2026-04-24T06:52:57.237Z",
   "session_id": "019db9fc-fcd7-76b0-8e37-d7b41a5097fa",
   "thread_id": "",
-  "turn_id": "019dba21-b78d-7773-abb6-98146ffa632a",
+  "turn_id": "019dbe43-53c3-7dd3-bdd5-04ff14129aad",
   "input_lock": {
     "active": true,
     "scope": "deep-interview-auto-approval",
-    "acquired_at": "2026-04-23T11:15:45.023Z",
+    "acquired_at": "2026-04-24T06:42:08.015Z",
     "blocked_inputs": [
       "yes",
       "y",

@@ -5,10 +5,9 @@
   "keyword": "$deep-interview",
   "phase": "planning",
   "activated_at": "2026-04-23T11:15:45.023Z",
-  "updated_at": "2026-04-23T11:15:45.023Z",
+  "updated_at": "2026-04-24T06:33:38.898Z",
   "source": "keyword-detector",
   "session_id": "019db9fc-fcd7-76b0-8e37-d7b41a5097fa",
-  "thread_id": "",
   "turn_id": "019dba0d-9242-7e22-9800-a66fc6eeb4f1",
   "active_skills": [
     {
@@ -18,7 +17,6 @@
       "activated_at": "2026-04-23T11:15:45.023Z",
       "updated_at": "2026-04-23T11:15:45.023Z",
       "session_id": "019db9fc-fcd7-76b0-8e37-d7b41a5097fa",
-      "thread_id": "",
       "turn_id": "019dba0d-9242-7e22-9800-a66fc6eeb4f1"
     }
   ],

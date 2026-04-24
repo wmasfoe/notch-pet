@@ -1,16 +1,26 @@
 {
   "version": 1,
   "active": true,
-  "skill": "ralph",
-  "keyword": "$ralph",
+  "skill": "deep-interview",
+  "keyword": "interview",
   "phase": "planning",
-  "activated_at": "2026-04-23T11:39:14.007Z",
-  "updated_at": "2026-04-23T11:58:07.253Z",
+  "activated_at": "2026-04-24T06:42:08.015Z",
+  "updated_at": "2026-04-24T06:52:57.237Z",
   "source": "keyword-detector",
   "session_id": "019db9fc-fcd7-76b0-8e37-d7b41a5097fa",
-  "thread_id": "019dba22-7861-7193-b562-4c004b4476e0",
-  "turn_id": "019dba22-8775-7502-960b-c34c6799dbbc",
+  "thread_id": "",
+  "turn_id": "019dbe43-53c3-7dd3-bdd5-04ff14129aad",
   "active_skills": [
+    {
+      "skill": "deep-interview",
+      "phase": "planning",
+      "active": true,
+      "activated_at": "2026-04-24T06:42:08.015Z",
+      "updated_at": "2026-04-24T06:52:57.237Z",
+      "session_id": "019db9fc-fcd7-76b0-8e37-d7b41a5097fa",
+      "turn_id": "019dbe43-53c3-7dd3-bdd5-04ff14129aad",
+      "thread_id": ""
+    },
     {
       "skill": "ralph",
       "phase": "planning",
@@ -23,9 +33,9 @@
     }
   ],
   "input_lock": {
-    "active": false,
+    "active": true,
     "scope": "deep-interview-auto-approval",
-    "acquired_at": "2026-04-23T11:15:45.023Z",
+    "acquired_at": "2026-04-24T06:42:08.015Z",
     "blocked_inputs": [
       "yes",
       "y",
@@ -36,12 +46,8 @@
       "go ahead",
       "next i should"
     ],
-    "message": "Deep interview is active; auto-approval shortcuts are blocked until the interview finishes.",
-    "released_at": "2026-04-23T11:58:07.253Z",
-    "exit_reason": "handoff"
+    "message": "Deep interview is active; auto-approval shortcuts are blocked until the interview finishes."
   },
-  "initialized_mode": "ralph",
-  "initialized_state_path": ".omx/state/sessions/019db9fc-fcd7-76b0-8e37-d7b41a5097fa/ralph-state.json",
-  "iteration": 4,
-  "last_turn_at": "2026-04-24T03:10:55.946Z"
+  "initialized_mode": "deep-interview",
+  "initialized_state_path": ".omx/state/sessions/019db9fc-fcd7-76b0-8e37-d7b41a5097fa/deep-interview-state.json"
 }

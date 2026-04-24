@@ -34,8 +34,8 @@ final class NotchViewController: NSViewController {
         hostingView = PassThroughHostingView(
             rootView: PetView(viewModel: viewModel)
         )
-        hostingView.hitTestRect = { [weak self] in
-            self?.viewModel.hitTestRect ?? .zero
+        hostingView.hitTestRect = { [weak hostingView] in
+            hostingView?.bounds ?? .zero
         }
         view = hostingView
     }

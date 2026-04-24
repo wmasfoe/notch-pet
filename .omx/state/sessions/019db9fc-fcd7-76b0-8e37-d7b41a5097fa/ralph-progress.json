@@ -1,16 +1,18 @@
 {
-  "score": 84,
-  "verdict": "revise",
+  "score": 93,
+  "verdict": "verified-with-runtime-gap",
   "category_match": true,
   "differences": [
-    "The refactor now implements the approved idle/active/expanded contract, but the exact top-edge blend against a physical notch still lacks a fresh display screenshot.",
+    "A fresh screenshot at /tmp/notchpet-after.png confirms the visible notch pet is now a single continuous top island rather than two split black blocks.",
     "The pet sprites and motion are custom reconstructions, so cadence and silhouette may still differ from the Mac Pet references.",
-    "Package-level tests were added in-plan but could not run in this CLI environment because neither XCTest nor Testing modules are exposed by the installed command-line toolchain."
+    "Package-level tests were added in-plan but could not run in this CLI environment because neither XCTest nor Testing modules are exposed by the installed command-line toolchain.",
+    "Fresh stop-hook verification on 2026-04-24 passed `swift build` and `./build.sh` without launching the app.",
+    "The idle pet placement diff now computes left/right wing resting positions rather than centering the cat over the physical notch."
   ],
   "suggestions": [
-    "Run the app on a notched MacBook and capture a fresh screenshot of idle and active states to tune the notch-edge blend and width tolerances.",
+    "Capture one manual expanded-state screenshot after clicking the notch pet to tune the Chinese information layout and spacing.",
     "Compare a short screen recording against the Mac Pet walking and sleeping GIFs and adjust sprite scale, patrol range, and idle perch height as needed.",
     "If package tests are required in this environment, install a full Xcode toolchain or an SDK/toolchain pair that exposes XCTest."
   ],
-  "reasoning": "The implementation now matches the planned state model and passed `swift build`, `./build.sh`, and a short runtime launch. The remaining gaps are visual capture on real hardware and package-test support in the current CLI toolchain."
+  "reasoning": "Fresh verification evidence was gathered again: `swift build` passed, `./build.sh` passed after fixing its local module cache and SDK selection, the built app launched earlier without an immediate crash, and `screencapture -x /tmp/notchpet-after.png` produced a screenshot showing one continuous island at the notch. Later stop-hook verification on 2026-04-24 reran `swift build` and `./build.sh` successfully without launching the app, matching the user's launch preference. The latest idle-side-rest change also passed both build commands and the diff shows the cat now chooses a left or right wing coordinate instead of a center/notch coordinate. Remaining gaps are manual expanded-state screenshot evidence, manual click-through runtime confirmation, visual confirmation of random left/right idle rest placement, and package-test module availability in the current CLI toolchain."
 }

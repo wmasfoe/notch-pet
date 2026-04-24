@@ -11,8 +11,16 @@ struct PetView: View {
     @State private var appearedAt = Date()
     @State private var lastInteractionAt = Date()
     @State private var isPointerInside = false
+    @State private var contentIsRevealed = true
+    @State private var idleRestSide = IdleRestSide.random()
 
-    private let transitionAnimation = Animation.spring(response: 0.36, dampingFraction: 0.84)
+    private let islandAnimation = Animation.interpolatingSpring(
+        mass: 0.72,
+        stiffness: 430,
+        damping: 31,
+        initialVelocity: 0.9
+    )
+    private let contentAnimation = Animation.easeOut(duration: 0.18)
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 12.0)) { timeline in
@@ -51,76 +59,142 @@ struct PetView: View {
             lastInteractionAt = now
         }
         .preferredColorScheme(.dark)
-        .animation(transitionAnimation, value: viewModel.status)
-        .animation(transitionAnimation, value: viewModel.baseMode)
+        .animation(islandAnimation, value: viewModel.status)
+        .animation(islandAnimation, value: viewModel.baseMode)
         .animation(.easeInOut(duration: 0.18), value: isPointerInside)
-    }
+        .onChange(of: viewModel.status) { _ in
+            lastInteractionAt = .now
+            contentIsRevealed = false
+            if viewModel.status == .idle {
+                idleRestSide = .random()
+            }
 
-    @ViewBuilder
-    private func chromeBody(date: Date, sleeping: Bool) -> some View {
-        switch viewModel.status {
-        case .idle:
-            idleChrome(date: date, sleeping: sleeping)
-        case .active:
-            activeChrome(date: date, sleeping: false)
-        case .expanded:
-            expandedChrome(date: date, sleeping: false)
-        }
-    }
-
-    private func idleChrome(date: Date, sleeping: Bool) -> some View {
-        let chromeSize = viewModel.visibleChromeSize
-        let spriteScale = catScale
-        let spriteWidth = 16 * spriteScale
-        let centeredX = (chromeSize.width - spriteWidth) / 2
-
-        return ZStack(alignment: .topLeading) {
-            NotchShape(topCornerRadius: 6, bottomCornerRadius: 10)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.black.opacity(0.94),
-                            Color.black.opacity(0.82)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .frame(width: chromeSize.width, height: 12)
-
-            Capsule()
-                .fill(Color.white.opacity(0.08))
-                .frame(width: chromeSize.width - 22, height: 1)
-                .offset(x: 11, y: 10)
-
-            Ellipse()
-                .fill(Color.black.opacity(0.14))
-                .frame(width: spriteWidth * 0.8, height: 5)
-                .offset(x: centeredX + spriteWidth * 0.1, y: 27)
-
-            CatPixelArt(
-                isSleeping: sleeping,
-                frame: frameIndex(at: date, sleeping: sleeping),
-                scale: spriteScale,
-                mirrored: false
-            )
-            .offset(x: centeredX, y: 4)
-
-            if sleeping {
-                SleepBubbleStack(tick: date.timeIntervalSince(appearedAt))
-                    .offset(x: centeredX + spriteWidth * 0.7, y: -10)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.11) {
+                contentIsRevealed = true
             }
         }
     }
 
-    private func activeChrome(date: Date, sleeping: Bool) -> some View {
+    @ViewBuilder
+    private func chromeBody(date: Date, sleeping: Bool) -> some View {
+        let metrics = chromeMetrics
+
+        switch viewModel.status {
+        case .idle:
+            idleChrome(date: date)
+        case .active, .expanded:
+            islandChrome(
+                size: viewModel.visibleChromeSize,
+                topRadius: metrics.topRadius,
+                bottomRadius: metrics.bottomRadius,
+                shadowOpacity: metrics.shadowOpacity
+            ) {
+                statusContent(date: date, sleeping: sleeping)
+                    .opacity(contentIsRevealed ? 1 : 0)
+                    .offset(y: contentIsRevealed ? 0 : -8)
+                    .animation(contentAnimation, value: contentIsRevealed)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func statusContent(date: Date, sleeping: Bool) -> some View {
+        switch viewModel.status {
+        case .idle:
+            idleContent(date: date)
+        case .active:
+            activeContent(date: date, sleeping: false)
+        case .expanded:
+            expandedContent(date: date, sleeping: false)
+        }
+    }
+
+    private func idleChrome(date: Date) -> some View {
+        let chromeSize = viewModel.visibleChromeSize
+        let notchWidth = min(viewModel.deviceNotchRect.width, chromeSize.width)
+        let wingWidth = max((chromeSize.width - notchWidth) / 2, 0)
+
+        return ZStack(alignment: .top) {
+            HStack(spacing: 0) {
+                idleWing(roundsOuterLeftCorner: true)
+                    .frame(width: wingWidth, height: chromeSize.height)
+
+                Rectangle()
+                    .fill(idleFill)
+                    .frame(width: notchWidth, height: chromeSize.height)
+
+                idleWing(roundsOuterLeftCorner: false)
+                    .frame(width: wingWidth, height: chromeSize.height)
+            }
+            .frame(width: chromeSize.width, height: chromeSize.height)
+            .shadow(color: .black.opacity(0.2), radius: 10, y: 2)
+
+            idleContent(date: date)
+                .opacity(contentIsRevealed ? 1 : 0)
+                .offset(y: contentIsRevealed ? 0 : -6)
+                .animation(contentAnimation, value: contentIsRevealed)
+
+            Capsule()
+                .fill(Color.white.opacity(0.075))
+                .frame(width: max(chromeSize.width - 34, 24), height: 1)
+                .offset(y: max(chromeSize.height - 5, 0))
+        }
+        .frame(width: chromeSize.width, height: chromeSize.height, alignment: .top)
+    }
+
+    private func idleWing(roundsOuterLeftCorner: Bool) -> some View {
+        IdleWingShape(roundsOuterLeftCorner: roundsOuterLeftCorner, radius: 13)
+            .fill(idleFill)
+    }
+
+    private var idleFill: LinearGradient {
+        LinearGradient(
+            colors: [
+                Color.black.opacity(0.98),
+                Color.black.opacity(0.92)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+
+    private func idleContent(date: Date) -> some View {
+        let chromeSize = viewModel.visibleChromeSize
+        let spriteScale = catScale
+        let spriteWidth = 16 * spriteScale
+        let notchWidth = min(viewModel.deviceNotchRect.width, chromeSize.width)
+        let wingWidth = max((chromeSize.width - notchWidth) / 2, spriteWidth + 12)
+        let sideInset = max((wingWidth - spriteWidth) / 2, 8)
+        let leftRestingX = sideInset
+        let rightRestingX = chromeSize.width - wingWidth + sideInset
+        let restingX = idleRestSide == .left ? leftRestingX : rightRestingX
+        let bubbleOffset = idleRestSide == .left ? spriteWidth * 0.56 : spriteWidth * 0.72
+        let tick = date.timeIntervalSince(appearedAt)
+
+        return ZStack(alignment: .topLeading) {
+            Ellipse()
+                .fill(Color.black.opacity(0.18))
+                .frame(width: spriteWidth * 0.86, height: 5)
+                .offset(x: restingX + spriteWidth * 0.08, y: chromeSize.height - 6)
+
+            CatPixelArt(
+                isSleeping: true,
+                frame: frameIndex(at: date, sleeping: true),
+                scale: spriteScale,
+                mirrored: false
+            )
+            .offset(x: restingX, y: max(0, chromeSize.height - 30) - CGFloat(sin(tick * 1.2)) * 0.8)
+
+            SleepBubbleStack(tick: tick)
+                .offset(x: restingX + bubbleOffset, y: -8)
+        }
+        .frame(width: chromeSize.width, height: chromeSize.height, alignment: .topLeading)
+    }
+
+    private func activeContent(date: Date, sleeping: Bool) -> some View {
         let chromeSize = viewModel.visibleChromeSize
 
-        return islandChrome(
-            size: chromeSize,
-            topRadius: 10,
-            bottomRadius: 20
-        ) {
+        return ZStack(alignment: .top) {
             patrolStage(
                 date: date,
                 sleeping: sleeping,
@@ -131,79 +205,87 @@ struct PetView: View {
         }
     }
 
-    private func expandedChrome(date: Date, sleeping: Bool) -> some View {
+    private func expandedContent(date: Date, sleeping: Bool) -> some View {
         let chromeSize = viewModel.visibleChromeSize
 
-        return islandChrome(
-            size: chromeSize,
-            topRadius: 18,
-            bottomRadius: 26
-        ) {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(viewModel.baseMode == .active ? Color.orange : Color.blue)
-                        .frame(width: 8, height: 8)
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .center, spacing: 10) {
+                Circle()
+                    .fill(viewModel.baseMode == .active ? Color.orange : Color.cyan)
+                    .frame(width: 8, height: 8)
+                    .shadow(color: (viewModel.baseMode == .active ? Color.orange : Color.cyan).opacity(0.8), radius: 5)
 
-                    Text("Notch Pet")
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.92))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(viewModel.baseMode == .active ? "小猫巡逻中" : "小猫在休息")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.95))
 
-                    Spacer()
-
-                    Button {
-                        viewModel.closeExpanded()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.white.opacity(0.55))
-                            .frame(width: 20, height: 20)
-                            .background(Color.white.opacity(0.08), in: Circle())
-                    }
-                    .buttonStyle(.plain)
+                    Text("点击收起，悬停只唤醒，不自动展开")
+                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.48))
                 }
 
-                patrolStage(
-                    date: date,
-                    sleeping: sleeping,
-                    stageHeight: 82
-                )
-                .frame(height: 82)
+                Spacer()
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Mode")
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.7))
+                Button {
+                    viewModel.closeExpanded()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.58))
+                        .frame(width: 22, height: 22)
+                        .background(Color.white.opacity(0.09), in: Circle())
+                }
+                .buttonStyle(.plain)
+            }
 
-                    Picker("Mode", selection: baseModeBinding) {
+            patrolStage(
+                date: date,
+                sleeping: sleeping,
+                stageHeight: 74
+            )
+            .frame(height: 74)
+            .padding(.horizontal, -2)
+
+            HStack(alignment: .bottom, spacing: 10) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("手动状态")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.45))
+
+                    Picker("手动状态", selection: baseModeBinding) {
                         ForEach(NotchBaseMode.allCases) { mode in
                             Text(mode.title).tag(mode)
                         }
                     }
                     .pickerStyle(.segmented)
-
-                    Text("Hover can wake the pet into active mode, but only a click opens this panel.")
-                        .font(.system(size: 12, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.72))
-                        .fixedSize(horizontal: false, vertical: true)
+                    .frame(width: min(190, chromeSize.width * 0.52))
                 }
 
-                HStack(spacing: 6) {
-                    statChip(title: "Hover", value: "Active")
-                    statChip(title: "Expand", value: "Click")
-                    statChip(title: "Info", value: "Manual")
+                Spacer(minLength: 8)
+
+                VStack(alignment: .trailing, spacing: 6) {
+                    HStack(spacing: 6) {
+                        statChip(title: "悬停", value: "唤醒")
+                        statChip(title: "展开", value: "点击")
+                    }
+
+                    Text("当前只做展示与状态切换")
+                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.42))
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 12)
-            .padding(.bottom, 14)
         }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .padding(.bottom, 13)
     }
 
     private func islandChrome<Content: View>(
         size: CGSize,
         topRadius: CGFloat,
         bottomRadius: CGFloat,
+        shadowOpacity: Double,
         @ViewBuilder content: () -> Content
     ) -> some View {
         ZStack(alignment: .top) {
@@ -228,7 +310,7 @@ struct PetView: View {
             content()
         }
         .frame(width: size.width, height: size.height, alignment: .top)
-        .shadow(color: .black.opacity(0.42), radius: 14, y: 6)
+        .shadow(color: .black.opacity(shadowOpacity), radius: 14, y: 6)
     }
 
     private func patrolStage(date: Date, sleeping: Bool, stageHeight: CGFloat) -> some View {
@@ -294,6 +376,17 @@ struct PetView: View {
             return 2.4
         case .expanded:
             return 2.9
+        }
+    }
+
+    private var chromeMetrics: (topRadius: CGFloat, bottomRadius: CGFloat, shadowOpacity: Double) {
+        switch viewModel.status {
+        case .idle:
+            return (8, 16, 0.22)
+        case .active:
+            return (10, 20, 0.42)
+        case .expanded:
+            return (18, 28, 0.5)
         }
     }
 
@@ -368,5 +461,53 @@ private struct SleepBubbleStack: View {
             .foregroundStyle(Color.white.opacity(0.58))
             .offset(y: -CGFloat(sin(phase)) * 3)
             .opacity(0.48 + abs(cos(phase)) * 0.28)
+    }
+}
+
+private enum IdleRestSide {
+    case left
+    case right
+
+    static func random() -> IdleRestSide {
+        Bool.random() ? .left : .right
+    }
+}
+
+private struct IdleWingShape: Shape {
+    var roundsOuterLeftCorner: Bool
+    var radius: CGFloat
+
+    var animatableData: CGFloat {
+        get { radius }
+        set { radius = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        let resolvedRadius = min(radius, rect.width, rect.height)
+        var path = Path()
+
+        if roundsOuterLeftCorner {
+            path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.minX + resolvedRadius, y: rect.maxY))
+            path.addQuadCurve(
+                to: CGPoint(x: rect.minX, y: rect.maxY - resolvedRadius),
+                control: CGPoint(x: rect.minX, y: rect.maxY)
+            )
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
+        } else {
+            path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - resolvedRadius))
+            path.addQuadCurve(
+                to: CGPoint(x: rect.maxX - resolvedRadius, y: rect.maxY),
+                control: CGPoint(x: rect.maxX, y: rect.maxY)
+            )
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
+        }
+
+        return path
     }
 }

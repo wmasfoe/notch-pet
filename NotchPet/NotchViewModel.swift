@@ -22,9 +22,9 @@ enum NotchBaseMode: String, CaseIterable, Equatable, Identifiable {
     var title: String {
         switch self {
         case .idle:
-            return "Idle"
+            return "待机"
         case .active:
-            return "Active"
+            return "活跃"
         }
     }
 }
@@ -98,8 +98,8 @@ final class NotchViewModel: ObservableObject {
         switch status {
         case .idle:
             return CGSize(
-                width: notchWidth + (hasPhysicalNotch ? 12 : 16),
-                height: max(deviceNotchRect.height + 6, 34)
+                width: notchWidth + (hasPhysicalNotch ? 132 : 140),
+                height: max(deviceNotchRect.height, 32)
             )
         case .active:
             return CGSize(

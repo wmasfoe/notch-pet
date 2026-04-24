@@ -6,10 +6,19 @@ echo "🐱 开始构建 NotchPet..."
 
 # 创建构建目录
 mkdir -p build
+mkdir -p .build/ModuleCache
+
+export CLANG_MODULE_CACHE_PATH="${CLANG_MODULE_CACHE_PATH:-.build/ModuleCache}"
+
+SDKROOT="${SDKROOT:-/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk}"
+if [ ! -d "$SDKROOT" ]; then
+    SDKROOT="$(xcrun --show-sdk-path --sdk macosx)"
+fi
 
 # 编译所有 Swift 文件
 swiftc -o build/NotchPet \
-    -sdk $(xcrun --show-sdk-path --sdk macosx) \
+    -module-cache-path "$CLANG_MODULE_CACHE_PATH" \
+    -sdk "$SDKROOT" \
     -target arm64-apple-macos13.0 \
     NotchPet/NotchPetApp.swift \
     NotchPet/AppDelegate.swift \
